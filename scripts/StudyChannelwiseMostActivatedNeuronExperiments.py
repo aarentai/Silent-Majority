@@ -10,6 +10,7 @@ from utils.utils import *
 def main():
     parser = argparse.ArgumentParser(description='A simple program for demonstration purposes.')
     parser.add_argument('--experiment_dataset', type=str, default='waterbirds', help='either celeba or waterbirds')
+    parser.add_argument('--experiment_split', type=str, default='train', help='either train or test')
     parser.add_argument('--celeba_dataset_path', type=str, help='path to the celeba dataset')
     parser.add_argument('--waterbird_dataset_path', type=str, help='path to the waterbirds dataset')
     parser.add_argument('--modification_mode', type=str, default='zero', help='only supports random_init, random_noise, zero, rewind')
@@ -19,6 +20,7 @@ def main():
     args = parser.parse_args()
 
     experiment_dataset = args.experiment_dataset
+    experiment_split = args.experiment_split
     celeba_dataset_path = args.celeba_dataset_path
     waterbird_dataset_path = args.waterbird_dataset_path
     modification_mode = args.modification_mode
@@ -26,8 +28,8 @@ def main():
     row_back_n_epochs = args.row_back_n_epochs
     top_k = args.top_k
     assert experiment_dataset in ['celeba', 'waterbirds'], 'experiment_dataset only supports celeba or waterbirds' 
+    assert experiment_dataset in ['train', 'test'], 'experiment_split only supports train or test' 
     assert modification_mode in ['random_init', 'random_noise', 'zero', 'rewind'], 'modification_mode only supports random_init, random_noise, zero, rewind' 
-
 
     target_resolution = (224, 224)
     batch_size = 200
@@ -39,38 +41,26 @@ def main():
     elif experiment_dataset=='waterbirds':
         dataset_path = waterbird_dataset_path
         labels = {0:'Land Bird on Land: 3498', 1:'Land Bird on Water: 184', 2:'Water Bird on Land: 56', 3:'Water Bird on Water: 1057'}
-    # output_dir = f'experiments/resnet50_{experiment_dataset}_group_unbalanced_erm'
-    output_dir = f'/experiments/resnet50_{experiment_dataset}_group_unbalanced_erm'
+    output_dir = f'/experiments/resnet50_{experiment_dataset}_{experiment_split}_group_unbalanced_erm'
 
-    train_transform = get_transform(target_resolution=target_resolution, train=True, augment_data=True)
-    test_transform = get_transform(target_resolution=target_resolution, train=False, augment_data=False)
-    training_dataset = ShortcutLearningDataset(basedir=dataset_path, 
-                                        split="train",
+    split_transform = get_transform(target_resolution=target_resolution, train=False, augment_data=False)
+    target_split_dataset = ShortcutLearningDataset(basedir=dataset_path, 
+                                        split=experiment_split,
                                         reweight=False,
-                                        transform=test_transform,
+                                        transform=split_transform,
                                         device='cuda:1')
 
-    training_dataloader = DataLoader(training_dataset, 
+    target_split_dataloader = DataLoader(target_split_dataset, 
                                     batch_size=batch_size,
-                                    shuffle=False, 
-                                    num_workers=0)
-
-    testing_dataset = ShortcutLearningDataset(basedir=dataset_path, 
-                                        split="test",
-                                        reweight=False,
-                                        transform=test_transform,
-                                        device='cuda:1')
-    testing_dataloader = DataLoader(testing_dataset, 
-                                    batch_size=batch_size, 
                                     shuffle=False, 
                                     num_workers=0)
 
     device = torch.device('cuda:1' if torch.cuda.is_available() else 'cpu')
     model = resnet50()
     d = model.fc.in_features
-    n_classes = training_dataset.n_classes
+    n_classes = target_split_dataset.n_classes
     model.fc = torch.nn.Sequential(
-        torch.nn.Linear(in_features=d, out_features=training_dataset.n_classes),
+        torch.nn.Linear(in_features=d, out_features=target_split_dataset.n_classes),
         torch.nn.Softmax(dim=1)  # Add a softmax layer
     )
     checkpoint = torch.load(f'{output_dir}/epoch_{n_epochs}_checkpoints.pth.tar', map_location=device)
@@ -78,7 +68,7 @@ def main():
     model = model.to(device)
     criterion = torch.nn.CrossEntropyLoss()
 
-    original_outcome_string = group_accuracy_evaluation([0,1,2,3], training_dataloader, model)[2:]
+    original_outcome_string = group_accuracy_evaluation([0,1,2,3], target_split_dataloader, model)[2:]
     print(original_outcome_string)
 
     # configuration_list = [
@@ -138,7 +128,7 @@ def main():
     for group_id in range(4):
         model.load_state_dict(checkpoint['model_state_dict'])
         poorest_performing_samples_dataloader = get_poorest_performing_samples_as_dataloader(model,
-                                                                                                training_dataset, 
+                                                                                                target_split_dataset, 
                                                                                                 target_groups=[group_id])
 
         '''randomly sample a batch to calculate the loss to get most activated neuron'''
@@ -172,8 +162,7 @@ def main():
                                     noise_std=noise_std,
                                     return_independent_model=False)
 
-            outcome_string = group_accuracy_evaluation([0,1,2,3], training_dataloader, model)
-            # outcome_string = group_accuracy_evaluation([0,1,2,3], testing_dataloader, model)
+            outcome_string = group_accuracy_evaluation([0,1,2,3], target_split_dataloader, model)
             print(outcome_string)
 
             with open(save_path, 'a') as f:

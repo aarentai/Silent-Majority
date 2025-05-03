@@ -46,6 +46,24 @@ In this section, we validate the existence of critical neurons in the presence o
 | runStudyChannelwiseMostActivatedNeuronExperiments.sh | Investigate the impact of modifying the top-k most activated neurons in a model trained using ERM.  |
 | runStudyLargestNeuronByThresholdExperiments.sh       | Investigate the impact of modifying the top-x percent largest neurons in a model trained using ERM. |
 
+We prepared random initialization/noise data in the paper by averaging the result from 10 experiments documented in the output txt. For example if the output text reads as
+```
+1.0000, 0.9891, 0.8929, 0.9858
+modified neurons name, index and value
+conv1.weight, 28, 4.643474578857422
+0.9987, 0.8208, 0.6371, 0.9315
+0.9956, 0.8102, 0.6371, 0.9299
+0.9969, 0.8111, 0.6604, 0.9299
+0.9973, 0.8067, 0.6449, 0.9315
+0.9965, 0.8018, 0.6589, 0.9408
+0.9973, 0.8129, 0.6402, 0.9268
+0.9969, 0.8137, 0.6262, 0.9252
+0.9987, 0.8151, 0.6324, 0.9283
+0.9965, 0.8049, 0.6121, 0.9221
+0.9987, 0.8262, 0.6386, 0.9283
+```
+Then we calculate the average by column of the last 10 rows (group 0-3 accuracy with random initialization/noise) and subtract it from the first row data (the original group 0-3 accuracy without pruning).
+
 ## Part II: Spurious Memorization by Critical Neurons
 In this section, we take a further step in demystifying the cause of imbalanced group performance under spurious correlation, particularly focusing on the discrepancy in the test accuracy between majority and minority groups. 
 
