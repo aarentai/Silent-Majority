@@ -1,3 +1,4 @@
+# Uncovering Memorization Effect in the Presence of Spurious Correlations 
 ## Overview
 In this work, we present the first systematic study on the role of different neurons in memorizing different group information, and confirm the existence of critical neurons where memorization of spurious correlations occurs.
 
@@ -35,6 +36,7 @@ Download the following checkpoints to `experiments/` folder, keep the name uncha
 | deit_small | https://dl.fbaipublicfiles.com/deit/deit_small_patch16_224-cd65a155.pth                                                    |
 | deit_base  | https://dl.fbaipublicfiles.com/deit/deit_base_patch16_224-b5f2ef4d.pth                                                     |
 | deit_large | https://github.com/rwightman/pytorch-image-models/releases/download/v0.1-vitjx/jx_vit_large_patch16_224_in21k-606da67d.pth |
+
 We finetuned the pretrained models for 40 and 20 epochs via ERM on Waterbirds and CelebA respectively, using `runSpuriousCorrelationPretrainingErm.sh`.
 
 ## Part I: Identifying the Existence of Critical Neurons
