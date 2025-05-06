@@ -35,6 +35,7 @@ Download the following checkpoints to `experiments/` folder, keep the name uncha
 | deit_small | https://dl.fbaipublicfiles.com/deit/deit_small_patch16_224-cd65a155.pth                                                    |
 | deit_base  | https://dl.fbaipublicfiles.com/deit/deit_base_patch16_224-b5f2ef4d.pth                                                     |
 | deit_large | https://github.com/rwightman/pytorch-image-models/releases/download/v0.1-vitjx/jx_vit_large_patch16_224_in21k-606da67d.pth |
+We finetuned the pretrained models for 40 and 20 epochs via ERM on Waterbirds and CelebA respectively, using `runSpuriousCorrelationPretrainingErm.sh`.
 
 ## Part I: Identifying the Existence of Critical Neurons
 In this section, we validate the existence of critical neurons in the presence of spurious correlations.
@@ -46,7 +47,31 @@ In this section, we validate the existence of critical neurons in the presence o
 | runStudyChannelwiseMostActivatedNeuronExperiments.sh | Investigate the impact of modifying the top-k most activated neurons in a model trained using ERM.  |
 | runStudyLargestNeuronByThresholdExperiments.sh       | Investigate the impact of modifying the top-x percent largest neurons in a model trained using ERM. |
 
-We prepared random initialization/noise data in the paper by averaging the result from 10 experiments documented in the output txt. For example if the output text reads as
+To reproduce the Figure 1/2/3/4/5/11/12 and Table 11/13/14, you can run
+```
+python scripts/StudyChannelwiseMostActivatedNeuronExperiments.py --experiment_dataset="waterbirds" \
+                                                                    --experiment_split="train" \
+                                                                    --celeba_dataset_path=".../celeba" \
+                                                                    --waterbird_dataset_path=".../waterbird_complete95_forest2water2" \
+                                                                    --modification_mode="zero" \
+                                                                    --noise_std=0 \
+                                                                    --row_back_n_epochs=0 \
+                                                                    --top_k=3
+```
+or 
+```
+python scripts/StudyChannelwiseLargestNeuronExperiments.py --experiment_dataset="waterbirds" \
+                                                            --experiment_split="train" \
+                                                            --celeba_dataset_path=".../celeba" \
+                                                            --waterbird_dataset_path=".../waterbird_complete95_forest2water2" \
+                                                            --modification_mode="zero" \
+                                                            --noise_std=0 \
+                                                            --row_back_n_epochs=0 \
+                                                            --top_k=3
+```
+by setting the argument accordingly.
+
+If you are performing random initialization/noise related experiment, you have to average the result from 10 experiments documented in the output txt. For example if the output text reads as
 ```
 1.0000, 0.9891, 0.8929, 0.9858
 modified neurons name, index and value
@@ -62,10 +87,11 @@ conv1.weight, 28, 4.643474578857422
 0.9965, 0.8049, 0.6121, 0.9221
 0.9987, 0.8262, 0.6386, 0.9283
 ```
-Then we calculate the average by column of the last 10 rows (group 0-3 accuracy with random initialization/noise) and subtract it from the first row data (the original group 0-3 accuracy without pruning).
+Then we calculate the average by column of the last 10 rows (each row denotes the group 0-3 accuracy with random initialization/noise) and subtract it from the first row data (the original group 0-3 accuracy without pruning) to get the final result.
 
 ## Part II: Spurious Memorization by Critical Neurons
-In this section, we take a further step in demystifying the cause of imbalanced group performance under spurious correlation, particularly focusing on the discrepancy in the test accuracy between majority and minority groups. 
+In this section, we take a further step in investigate the cause of imbalanced group performance under spurious correlation, particularly focusing on the discrepancy in the test accuracy between majority and minority groups. 
 
 The script `runSpuriousCorrelationFinetuningPruning.sh` aims to finetune the model with critical neuron pruned, in order to closing the gap between the majority and minority group accuracy.
 
+To reproduce the Table 4-10, you can run `runSpuriousCorrelationFinetuningPruning.sh` by setting arguments accordingly.
