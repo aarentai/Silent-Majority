@@ -6,7 +6,7 @@ We show that modifications to specific critical neurons can significantly affect
 We propose spurious memorization as a new perspective on explaining the behavior of critical neurons in causing imbalanced group performance between majority and minority groups.
 
 ## Environment Preparation
-The required packages are listed in `requirements.txt`. Make sure you having `.../SilentMajority` as the working directory when running any scripts.
+The required packages are listed in `requirements.txt`. Make sure you having `.../Uncovering-Spurious-Memorization` as the working directory when running any scripts.
 
 ## Dataset Preparation
 
